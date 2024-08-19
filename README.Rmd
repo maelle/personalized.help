@@ -1,0 +1,97 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# personalized.help
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of personalized.help is to demonstrate how you can create some content of a manual page in an R package _on the fly_, inspired by a conversation in the rOpenSci slack workspace.
+
+## Installation
+
+You can install the development version of personalized.help like so:
+
+``` r
+pak::pak("maelle/personalized.help")
+```
+
+## Example
+
+Imagine I, Maëlle Salmon, load the help page for thing.
+Notice how the help page says "hello" to _me_.
+
+```{r eval=FALSE, echo=TRUE}
+library(personalized.help)
+?thing
+```
+
+```{r eval=TRUE, echo=FALSE, results='asis'}
+library(personalized.help)
+# https://stackoverflow.com/questions/63677870/how-do-you-make-output-from-help-function-display-in-rmarkdown-document
+helpfile <- utils:::.getHelpFile(help(thing))
+outfile <- withr::local_tempfile(fileext = ".html")
+tools:::Rd2HTML(helpfile, out = outfile)
+html <- brio::read_lines(outfile)
+html <- html[grep("\\<h2\\>", html):length(html)]
+html <- paste(html, collapse = "\n")
+cat(c("```html\n", html, "\n```\n"))
+```
+
+Now what if you, Awesome Person, do that?
+To trick whoami to think I am you I am setting the `FULLNAME` environment variable to your name.
+
+The help page says hello to you using your name!
+
+```{r eval=FALSE, echo=TRUE}
+library(personalized.help)
+withr::local_envvar(FULLNAME = "Awesome Person")
+?thing
+```
+
+```{r eval=TRUE, echo=FALSE, results='asis'}
+library(personalized.help)
+# https://stackoverflow.com/questions/63677870/how-do-you-make-output-from-help-function-display-in-rmarkdown-document
+withr::local_envvar(FULLNAME = "Awesome Person")
+helpfile <- utils:::.getHelpFile(help(thing))
+outfile <- withr::local_tempfile(fileext = ".html")
+tools:::Rd2HTML(helpfile, out = outfile)
+html <- brio::read_lines(outfile)
+html <- html[grep("\\<h2\\>", html):length(html)]
+html <- paste(html, collapse = "\n")
+cat(c("```html\n", html, "\n```\n"))
+```
+
+## How it works
+
+The source of the help of `thing()` has, in lieu of an actual description, this:
+
+```r
+#' \Sexpr[results=rd,stage=render]{personalized.help:::generate_help()}
+```
+
+where `generate_help()` is this internal function:
+
+```r
+generate_help <- function() {
+  sprintf("Hello %s!", whoami::fullname(fallback = "human"))
+}
+```
+
+`generate_help()` gets executed every time the help page is loaded.
+It gets the name of the user using the whoami package.
+
+[Real example on CRAN](https://github.com/cran/stevedore/blob/74b63bfcff2af200367fbd78febfd2d36855d500/R/help.R#L4).
+[More examples](https://github.com/search?q=\Sexpr[results%3Drd%2Cstage%3Drender]+user%3Acran&type=code&ref=advsearch).
