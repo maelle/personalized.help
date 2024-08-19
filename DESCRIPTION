@@ -11,3 +11,5 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: 
     whoami
+URL: https://github.com/maelle/personalized.help
+BugReports: https://github.com/maelle/personalized.help/issues
